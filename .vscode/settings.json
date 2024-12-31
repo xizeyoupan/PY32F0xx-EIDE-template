@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "main.h": "c",
+        "stdarg.h": "c",
+        "flash_control.h": "c",
+        "led_driver.h": "c"
+    }
+}
