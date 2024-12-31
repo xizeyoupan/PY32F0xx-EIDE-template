@@ -28,7 +28,7 @@ uint8_t data_to_send_size;
 uint8_t send_continuously;
 uint8_t initial_sned;
 
-uint8_t mode_index;
+uint8_t mode_index = MODE_FADE;
 uint8_t func_index;
 uint8_t color_index;
 
@@ -107,6 +107,18 @@ void switch_color()
     initial_sned = 1;
 }
 
+void switch_func()
+{
+    if (++func_index == FUNC_NUM) {
+        func_index = 0;
+    }
+    data_to_send_size = 4;
+    data_to_send[0]   = 0b00011001;
+    set_color(1, COLOR_NONE);
+    send_one_frame(data_to_send, data_to_send_size);
+    initial_sned = 1;
+}
+
 uint8_t need_break()
 {
     if (initial_sned || shut_down) return 1;
@@ -140,6 +152,9 @@ void send_led_data()
         case MODE_FADE:
             if (func_index == 0) {
             } else {
+                if (++color_index == COLOR_NUM) {
+                    color_index = 0;
+                }
             }
 
             // turn off
@@ -214,7 +229,8 @@ void control_led(Received_Command cmd)
             break;
         case RECEIVED_KEY:
             // switch_mode();
-            switch_color();
+            // switch_color();
+            switch_func();
             break;
         default:
             break;

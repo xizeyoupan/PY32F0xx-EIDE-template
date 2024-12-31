@@ -86,7 +86,6 @@ void PendSV_Handler(void)
 
 void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 {
-    // __HAL_TIM_CLEAR_IT(&delay_htim, TIM_IT_UPDATE);
     HAL_TIM_IRQHandler(&delay_htim);
 }
 

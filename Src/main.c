@@ -172,9 +172,6 @@ static void APP_Config(void)
         APP_ErrorHandler();
     }
 
-    // __HAL_TIM_ENABLE_IT(&update_htim, TIM_IT_UPDATE);
-    // __HAL_TIM_ENABLE(&update_htim);
-
     if (HAL_TIM_Base_Start_IT(&update_htim) != HAL_OK) /* TIM1初始化 */
     {
         APP_ErrorHandler();
@@ -192,6 +189,7 @@ int main(void)
     // init_uart();
     // fast_printf(&UartHandle, "test\n");
 
+    gen_fade_table();
     control_led(RECEIVED_ON);
 
     while (1) {

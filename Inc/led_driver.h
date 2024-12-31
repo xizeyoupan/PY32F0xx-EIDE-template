@@ -41,8 +41,15 @@ typedef enum {
     MODE_NUM,
 } Mode_TypeDef;
 
+typedef enum {
+    FUNC_0,
+    FUNC_1,
+    FUNC_NUM,
+} Func_TypeDef;
+
 void control_led(Received_Command cmd);
 void send_led_data();
+void gen_fade_table();
 
 #ifdef __cplusplus
 }
