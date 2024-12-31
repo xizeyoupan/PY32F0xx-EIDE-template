@@ -197,7 +197,6 @@ int main(void)
     }
 }
 
-extern volatile uint32_t mode_trigger_time_ms;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &update_htim) {
@@ -205,7 +204,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (us_cnt >= 1000) {
             us_cnt = 0;
             check_key();
-            if (mode_trigger_time_ms > 0) mode_trigger_time_ms--;
         }
     }
 }
