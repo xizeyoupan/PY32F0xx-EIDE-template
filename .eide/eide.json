@@ -113,6 +113,9 @@
           },
           {
             "path": "Src/led_driver.c"
+          },
+          {
+            "path": "Src/YG350.c"
           }
         ],
         "folders": []
@@ -197,7 +200,7 @@
           "c/cpp-compiler": {
             "language-c": "c99",
             "language-cpp": "c++11",
-            "optimization": "level-0",
+            "optimization": "level-1",
             "warnings": "all-warnings",
             "one-elf-section-per-function": true,
             "one-elf-section-per-data": true

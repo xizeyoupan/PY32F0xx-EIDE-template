@@ -414,6 +414,11 @@
               <FileType>1</FileType>
               <FilePath>..\Src\led_driver.c</FilePath>
             </File>
+            <File>
+              <FileName>YG350.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\YG350.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

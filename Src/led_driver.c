@@ -509,3 +509,7 @@ void control_led(Received_Command cmd)
             break;
     }
 }
+
+void set_timeout()
+{
+}

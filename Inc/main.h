@@ -43,8 +43,18 @@ extern "C" {
 
 #define KEY_PIN                    (GPIO_PIN_0)
 #define KEY_PIN_PORT               (GPIOB)
+
+#define ST_PIN                     (GPIO_PIN_1)
+#define ST_PIN_PORT                (GPIOB)
+
 #define CTRL_PIN                   (GPIO_PIN_3)
 #define CTRL_PIN_PORT              (GPIOA)
+
+#define SDA_PIN                    (GPIO_PIN_7)
+#define SDA_PIN_PORT               (GPIOA)
+
+#define SCL_PIN                    (GPIO_PIN_9)
+#define SCL_PIN_PORT               (GPIOA)
 
 #define usPerInterrupt             (40)
 #define msToTimerInterruptCount(x) ((x) * 1000 / usPerInterrupt)

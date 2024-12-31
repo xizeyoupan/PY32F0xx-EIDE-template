@@ -1,5 +1,6 @@
 #include "main.h"
 #include "led_driver.h"
+#include "YG350.h"
 
 TIM_HandleTypeDef update_htim, delay_htim;
 
@@ -10,9 +11,14 @@ GPIO_InitTypeDef GPIO_InitStruct;
 uint16_t f_key_continuous_down_cnt;
 uint8_t f_key_down_cnt;
 uint8_t f_key_press_down;
+
+uint16_t st_key_continuous_down_cnt;
+uint8_t st_key_down_cnt;
+uint8_t st_key_press_down;
+
 uint16_t us_cnt;
 
-void check_key()
+void check_fkey()
 {
     if (HAL_GPIO_ReadPin(KEY_PIN_PORT, KEY_PIN)) {
         if (f_key_down_cnt > 0) {
@@ -38,6 +44,34 @@ void check_key()
 
         } else {
             f_key_press_down = 1;
+        }
+    }
+}
+
+void check_stkey()
+{
+    if (HAL_GPIO_ReadPin(ST_PIN_PORT, ST_PIN)) {
+        if (st_key_down_cnt > 0) {
+            st_key_down_cnt--;
+        } else {
+            st_key_continuous_down_cnt = 0;
+            if (st_key_press_down) {
+                st_key_press_down = 0;
+                // TODO
+            }
+        }
+    } else {
+        if (st_key_continuous_down_cnt < 3000) {
+            st_key_continuous_down_cnt++;
+        } else {
+            st_key_press_down = 0;
+            return;
+        }
+        if (st_key_down_cnt < KEY_DOWN_HIHG_CNT) {
+            st_key_down_cnt++;
+
+        } else {
+            st_key_press_down = 1;
         }
     }
 }
@@ -138,14 +172,17 @@ static void APP_Config(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(KEY_PIN_PORT, &GPIO_InitStruct);
 
-    // HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
-    // HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+    GPIO_InitStruct.Pin = ST_PIN;
+    HAL_GPIO_Init(ST_PIN_PORT, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin   = CTRL_PIN;
     GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull  = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(CTRL_PIN_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = ST_PIN;
+    HAL_GPIO_Init(ST_PIN_PORT, &GPIO_InitStruct);
 
     //  for delay_us(uint16_t us) use, when call delay_us the program will be blocked
     delay_htim.Instance               = TIM1;
@@ -165,8 +202,8 @@ static void APP_Config(void)
     update_htim.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     update_htim.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
     update_htim.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    update_htim.Init.Period            = 960 - 1;
-    update_htim.Init.Prescaler         = 1 - 1;
+    update_htim.Init.Period            = 100 - 1;
+    update_htim.Init.Prescaler         = 24 - 1;
     update_htim.Init.RepetitionCounter = 1 - 1;
     if (HAL_TIM_Base_Init(&update_htim) != HAL_OK) {
         APP_ErrorHandler();
@@ -178,6 +215,10 @@ static void APP_Config(void)
     }
 }
 
+extern unsigned int trans_recv_overtime;
+extern unsigned char trans_recv_channel;
+extern unsigned char trans_recv_start;
+
 int main(void)
 {
     /* 初始化所有外设，Flash接口，SysTick */
@@ -185,6 +226,7 @@ int main(void)
     APP_SystemClockConfig();
 
     APP_Config();
+    YG350_init();
 
     // init_uart();
     // fast_printf(&UartHandle, "test\n");
@@ -194,16 +236,51 @@ int main(void)
 
     while (1) {
         send_led_data();
+
+        if (trans_recv_result()) {
+            trans_recv_overtime = 0;
+            trans_recv_start    = 1;
+            uint8_t recv_data[4];
+            YG350_read(recv_data, 1);
+            gen_fade_table();
+        }
+
+        if (trans_recv_start) {
+            trans_recv_start = 0;
+            switch (trans_recv_channel) {
+                case 0:
+                    YG350_recv(SEND_CHANNEL_1);
+                    break;
+                case 1:
+                    YG350_recv(SEND_CHANNEL_2);
+                    break;
+                case 2:
+                    YG350_recv(SEND_CHANNEL_3);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &update_htim) {
-        us_cnt += 40;
+        us_cnt += 100;
         if (us_cnt >= 1000) {
             us_cnt = 0;
-            check_key();
+            check_fkey();
+        }
+
+        trans_recv_overtime++;
+        if (trans_recv_overtime >= TRANS_RECV_OVERTIME) {
+            trans_recv_overtime = 0;
+            trans_recv_channel++;
+            if (trans_recv_channel >= TRANS_RECV_CHANNEL) {
+                trans_recv_channel = 0;
+            }
+            trans_recv_start = 1;
         }
     }
 }

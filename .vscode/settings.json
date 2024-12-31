@@ -4,6 +4,7 @@
         "main.h": "c",
         "stdarg.h": "c",
         "flash_control.h": "c",
-        "led_driver.h": "c"
+        "led_driver.h": "c",
+        "yg350.h": "c"
     }
 }
