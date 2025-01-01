@@ -1,4 +1,5 @@
 #include "led_driver.h"
+#include "YG350.h"
 
 extern TIM_HandleTypeDef update_htim, delay_htim;
 
@@ -20,15 +21,15 @@ const Color_TypeDef colors[COLOR_NUM] = {
     COLOR_PINK,
 };
 
-uint8_t shut_down = 1;
-uint8_t data_to_send[6];
-uint8_t data_to_send_size;
-uint8_t initial_sned;
+volatile uint8_t shut_down = 1;
+volatile uint8_t data_to_send[6];
+volatile uint8_t data_to_send_size;
+volatile uint8_t initial_sned;
 
-uint8_t mode_index = MODE_WAVE;
-uint8_t func_index;
-uint8_t color_index;
-uint8_t auto_color_index;
+volatile uint8_t mode_index = MODE_WAVE;
+volatile uint8_t func_index;
+volatile uint8_t color_index;
+volatile uint8_t auto_color_index;
 
 void gen_fade_table()
 {
@@ -77,23 +78,43 @@ void set_color(uint8_t color_start, Color_TypeDef color)
     data_to_send[color_start + 2] = (color & 0x0000ff) >> 0;
 }
 
-void switch_mode()
+void switch_mode(uint8_t _mode)
 {
-    if (++mode_index == MODE_NUM) {
-        mode_index = 0;
+    if (_mode == MODE_NUM) {
+        if (++mode_index == MODE_NUM) {
+            mode_index = 0;
+        }
+    } else {
+        mode_index = _mode;
     }
+
     initial_sned = 1;
 }
 
-void switch_color()
+void switch_color(Color_Dir_TypeDef dir)
 {
-    if (mode_index == MODE_CHASING) {
-        if (++color_index == 7) {
-            color_index = 0;
+    if (mode_index == MODE_JUMP) return;
+    if (mode_index == MODE_FADE && func_index == FUNC_1) return;
+
+    if (dir == COLOR_DIR_NEXT) {
+        if (mode_index == MODE_CHASING) {
+            if (++color_index == 7) {
+                color_index = 0;
+            }
+        } else {
+            if (++color_index == COLOR_NUM) {
+                color_index = 0;
+            }
         }
     } else {
-        if (++color_index == COLOR_NUM) {
-            color_index = 0;
+        if (mode_index == MODE_CHASING) {
+            if (color_index-- == 0) {
+                color_index = 6;
+            }
+        } else {
+            if (color_index-- == 0) {
+                color_index = COLOR_NUM - 1;
+            }
         }
     }
 
@@ -112,6 +133,50 @@ uint8_t need_break()
 {
     if (initial_sned || shut_down) return 1;
     return 0;
+}
+
+extern unsigned int trans_recv_overtime;
+extern unsigned char trans_recv_channel;
+extern unsigned char trans_recv_start;
+volatile uint16_t remote_delay_ms;
+void test_recv()
+{
+    if (trans_recv_result()) {
+        trans_recv_overtime = 0;
+        trans_recv_start    = 1;
+        uint8_t recv_data[4];
+        YG350_read(recv_data, 1);
+        if (1 <= recv_data[0] && recv_data[0] <= 0x12) {
+            control_led(recv_data[0]);
+        }
+    }
+
+    if (trans_recv_start) {
+        trans_recv_start = 0;
+        switch (trans_recv_channel) {
+            case 0:
+                YG350_recv(SEND_CHANNEL_1);
+                break;
+            case 1:
+                YG350_recv(SEND_CHANNEL_2);
+                break;
+            case 2:
+                YG350_recv(SEND_CHANNEL_3);
+                break;
+            default:
+                break;
+        }
+    }
+    HAL_GPIO_TogglePin(LED_R_PIN_PORT, LED_R_PIN);
+}
+
+void led_delay_ms(uint16_t t)
+{
+    for (uint16_t i = 0; i < t; i++) {
+        // test_recv();
+        HAL_GPIO_TogglePin(CTRL_PIN_PORT, CTRL_PIN);
+        HAL_Delay(1);
+    }
 }
 
 void send_led_data()
@@ -139,6 +204,7 @@ void send_led_data()
                 send_one_frame(data_to_send, data_to_send_size);
             }
             while (!need_break()) {
+                test_recv();
             }
 
             break;
@@ -172,6 +238,7 @@ void send_led_data()
                 data_to_send[2] = _g;
                 data_to_send[3] = _b;
                 send_one_frame(data_to_send, data_to_send_size);
+                test_recv();
                 if (need_break()) return;
             }
 
@@ -184,13 +251,14 @@ void send_led_data()
                 data_to_send[2] = _g;
                 data_to_send[3] = _b;
                 send_one_frame(data_to_send, data_to_send_size);
+                test_recv();
                 if (need_break()) return;
             }
 
             data_to_send[0] = 0b00011001;
             set_color(1, COLOR_NONE);
             send_one_frame(data_to_send, data_to_send_size);
-            HAL_Delay(10);
+            led_delay_ms(10);
 
             break;
         case MODE_TWINKLE:
@@ -200,6 +268,7 @@ void send_led_data()
             const uint16_t twinkle_delay_ms = 50;
 
             for (uint8_t mode_step_run_cnt = 0; mode_step_run_cnt < 21; mode_step_run_cnt++) {
+                test_recv();
                 if (need_break()) return;
 
                 switch (mode_step_run_cnt) {
@@ -251,6 +320,7 @@ void send_led_data()
             data_to_send[0]   = 0b01001001;
             if (func_index == 0) {
                 for (uint8_t i = 0; i < 16; i++) {
+                    test_recv();
                     if (need_break()) return;
                     data_to_send[1] = ((3 + i) % 16) + 0b11110000;
                     set_color(2, colors[color_index]);
@@ -262,6 +332,7 @@ void send_led_data()
                 }
             } else {
                 for (uint8_t i = 0; i < 16; i++) {
+                    test_recv();
                     if (need_break()) return;
                     data_to_send[1] = ((3 + i) % 16) + 0b11110000;
                     set_color(2, COLOR_NONE);
@@ -289,6 +360,7 @@ void send_led_data()
             }
 
             for (uint8_t i = 0; i < jump_delay_ms / 100; i++) {
+                test_recv();
                 if (need_break()) return;
                 HAL_Delay(100);
             }
@@ -299,6 +371,7 @@ void send_led_data()
             data_to_send[0]   = 0b01100001;
             data_to_send[1]   = 0b00000000;
             for (uint8_t i = 0; i < 51; i++) {
+                test_recv();
                 if (need_break()) return;
 
                 switch (color_index) {
@@ -348,6 +421,7 @@ void send_led_data()
                 send_one_frame(data_to_send, data_to_send_size);
 
                 for (uint8_t j = 0; j < i - 1; j++) {
+                    test_recv();
                     if (need_break()) return;
 
                     data_to_send[2] = j;
@@ -394,6 +468,7 @@ void send_led_data()
                 if (need_break()) return;
 
                 for (int8_t j = 0; j < wave_step; j++) {
+                    test_recv();
                     if (i - j < 0) break;
                     if (i - j > 12) continue;
 
@@ -422,7 +497,7 @@ void send_led_data()
                     send_one_frame(data_to_send, data_to_send_size);
                 }
             }
-            HAL_Delay(200);
+            led_delay_ms(200);
             break;
         case MODE_BREATHING:
 
@@ -447,6 +522,7 @@ void send_led_data()
 
                 for (uint8_t j = 0; j < 32; j++) {
                     send_one_frame(data_to_send, data_to_send_size);
+                    test_recv();
                     if (need_break()) return;
                 }
             }
@@ -462,6 +538,7 @@ void send_led_data()
 
                 for (uint8_t j = 0; j < 32; j++) {
                     send_one_frame(data_to_send, data_to_send_size);
+                    test_recv();
                     if (need_break()) return;
                 }
             }
@@ -478,36 +555,74 @@ void send_led_data()
 
 void control_led(Received_Command cmd)
 {
-    if (shut_down == 1 && cmd == RECEIVED_KEY) cmd = RECEIVED_ON;
+    if (remote_delay_ms) return;
 
-    if (shut_down == 1 && cmd != RECEIVED_ON) return; // Do nothing if shut down.
+    if (shut_down == 1 && cmd == RECEIVED_FKEY) cmd = RECEIVED_ON_OFF;
+
+    if (shut_down == 1 && cmd != RECEIVED_ON_OFF) return; // Do nothing if shut down.
 
     switch (cmd) {
-        case RECEIVED_ON:
-            if (shut_down == 0) return;
+        case RECEIVED_ON_OFF:
+            if (shut_down == 0) {
+                shut_down = 1;
+                HAL_GPIO_WritePin(CTRL_PIN_PORT, CTRL_PIN, GPIO_PIN_RESET);
+            } else {
+                data_to_send_size = 4;
+                data_to_send[0]   = 0b00011001;
+                set_color(1, COLOR_NONE);
+                HAL_GPIO_WritePin(CTRL_PIN_PORT, CTRL_PIN, GPIO_PIN_SET);
+                delay_us(&delay_htim, 1000);
+                send_one_frame(data_to_send, data_to_send_size);
 
-            data_to_send_size = 4;
-            data_to_send[0]   = 0b00011001;
-            set_color(1, COLOR_NONE);
-            HAL_GPIO_WritePin(CTRL_PIN_PORT, CTRL_PIN, GPIO_PIN_SET);
-            delay_us(&delay_htim, 1000);
-            send_one_frame(data_to_send, data_to_send_size);
-
-            initial_sned = 1;
-            shut_down    = 0;
+                initial_sned = 1;
+                shut_down    = 0;
+            }
             break;
-        case RECEIVED_OFF:
-            shut_down = 1;
-            HAL_GPIO_WritePin(CTRL_PIN_PORT, CTRL_PIN, GPIO_PIN_RESET);
+        case RECEIVED_TIMER:
             break;
-        case RECEIVED_KEY:
-            // switch_mode();
-            switch_color();
-            // switch_func();
+        case RECEIVED_NEXT_COLOR:
+            switch_color(COLOR_DIR_NEXT);
+            break;
+        case RECEIVED_PREV_COLOR:
+            switch_color(COLOR_DIR_PREV);
+            break;
+        case RECEIVED_MODE_STEADY:
+            switch_mode(MODE_STEADY);
+            break;
+        case RECEIVED_MODE_FADE:
+            switch_mode(MODE_FADE);
+            break;
+        case RECEIVED_MODE_TWINKLE:
+            switch_mode(MODE_TWINKLE);
+            break;
+        case RECEIVED_MODE_SHINING:
+            switch_mode(MODE_SHINING);
+            break;
+        case RECEIVED_MODE_JUMP:
+            switch_mode(MODE_JUMP);
+            break;
+        case RECEIVED_MODE_CHASING:
+            switch_mode(MODE_CHASING);
+            break;
+        case RECEIVED_MODE_BLOOMFADE:
+            switch_mode(MODE_BLOOMFADE);
+            break;
+        case RECEIVED_MODE_WAVE:
+            switch_mode(MODE_WAVE);
+            break;
+        case RECEIVED_MODE_BREATHING:
+            switch_mode(MODE_BREATHING);
+            break;
+        case RECEIVED_MODE_AUTO:
+            break;
+        case RECEIVED_FKEY:
+            switch_color(COLOR_DIR_NEXT);
             break;
         default:
             break;
     }
+
+    remote_delay_ms = 300;
 }
 
 void set_timeout()

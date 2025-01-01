@@ -92,8 +92,12 @@ void YG350_read(unsigned char *buf, unsigned char length);
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-#define TRANS_RECV_CHANNEL  3
-#define TRANS_RECV_OVERTIME 400
-#define trans_recv_result() YG350_ready()
+#define TRANS_RECV_CHANNEL     3
+#define TRANS_RECV_OVERTIME    400
+#define TRANS_RECV_OVERTIME_MS 40
+#define trans_recv_result()    YG350_ready()
+
+void delay_5us();
+void delay_1us();
 
 #endif

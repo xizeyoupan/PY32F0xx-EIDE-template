@@ -8,15 +8,15 @@ UART_HandleTypeDef UartHandle;
 GPIO_InitTypeDef GPIO_InitStruct;
 
 #define KEY_DOWN_HIHG_CNT (40)
-uint16_t f_key_continuous_down_cnt;
-uint8_t f_key_down_cnt;
-uint8_t f_key_press_down;
+volatile uint16_t f_key_continuous_down_cnt;
+volatile uint8_t f_key_down_cnt;
+volatile uint8_t f_key_press_down;
 
-uint16_t st_key_continuous_down_cnt;
-uint8_t st_key_down_cnt;
-uint8_t st_key_press_down;
+volatile uint16_t st_key_continuous_down_cnt;
+volatile uint8_t st_key_down_cnt;
+volatile uint8_t st_key_press_down;
 
-uint16_t us_cnt;
+volatile uint16_t ms_cnt;
 
 void check_fkey()
 {
@@ -27,7 +27,7 @@ void check_fkey()
             f_key_continuous_down_cnt = 0;
             if (f_key_press_down) {
                 f_key_press_down = 0;
-                control_led(RECEIVED_KEY);
+                control_led(RECEIVED_FKEY);
             }
         }
     } else {
@@ -35,7 +35,7 @@ void check_fkey()
             f_key_continuous_down_cnt++;
         } else {
             f_key_press_down = 0;
-            control_led(RECEIVED_OFF);
+            control_led(RECEIVED_ON_OFF);
             return;
         }
 
@@ -181,8 +181,17 @@ static void APP_Config(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(CTRL_PIN_PORT, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = ST_PIN;
-    HAL_GPIO_Init(ST_PIN_PORT, &GPIO_InitStruct);
+    GPIO_InitStruct.Pin = SCL_PIN;
+    HAL_GPIO_Init(SCL_PIN_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = LED_R_PIN;
+    HAL_GPIO_Init(LED_R_PIN_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = LED_G_PIN;
+    HAL_GPIO_Init(LED_G_PIN_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = LED_B_PIN;
+    HAL_GPIO_Init(LED_B_PIN_PORT, &GPIO_InitStruct);
 
     //  for delay_us(uint16_t us) use, when call delay_us the program will be blocked
     delay_htim.Instance               = TIM1;
@@ -196,13 +205,13 @@ static void APP_Config(void)
         APP_ErrorHandler();
     }
 
-    //  updates and interrupts every 40 us
+    //  updates and interrupts
 
     update_htim.Instance               = TIM16;
     update_htim.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     update_htim.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
     update_htim.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    update_htim.Init.Period            = 100 - 1;
+    update_htim.Init.Period            = 1000 - 1;
     update_htim.Init.Prescaler         = 24 - 1;
     update_htim.Init.RepetitionCounter = 1 - 1;
     if (HAL_TIM_Base_Init(&update_htim) != HAL_OK) {
@@ -226,55 +235,37 @@ int main(void)
     APP_SystemClockConfig();
 
     APP_Config();
-    YG350_init();
+    YG350_init(YG350_Power_Level_Max);
 
     // init_uart();
     // fast_printf(&UartHandle, "test\n");
 
     gen_fade_table();
-    control_led(RECEIVED_ON);
+    control_led(RECEIVED_ON_OFF);
 
     while (1) {
         send_led_data();
-
-        if (trans_recv_result()) {
-            trans_recv_overtime = 0;
-            trans_recv_start    = 1;
-            uint8_t recv_data[4];
-            YG350_read(recv_data, 1);
-            gen_fade_table();
-        }
-
-        if (trans_recv_start) {
-            trans_recv_start = 0;
-            switch (trans_recv_channel) {
-                case 0:
-                    YG350_recv(SEND_CHANNEL_1);
-                    break;
-                case 1:
-                    YG350_recv(SEND_CHANNEL_2);
-                    break;
-                case 2:
-                    YG350_recv(SEND_CHANNEL_3);
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 }
+
+extern uint16_t remote_delay_ms;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &update_htim) {
-        us_cnt += 100;
-        if (us_cnt >= 1000) {
-            us_cnt = 0;
-            check_fkey();
-        }
+
+        // ms_cnt += 1;
+        // if (ms_cnt >= 50) {
+        //     ms_cnt = 0;
+        //     // TODO
+        // }
+
+        if (remote_delay_ms) remote_delay_ms--;
+
+        check_fkey();
 
         trans_recv_overtime++;
-        if (trans_recv_overtime >= TRANS_RECV_OVERTIME) {
+        if (trans_recv_overtime >= TRANS_RECV_OVERTIME_MS) {
             trans_recv_overtime = 0;
             trans_recv_channel++;
             if (trans_recv_channel >= TRANS_RECV_CHANNEL) {
@@ -282,6 +273,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
             trans_recv_start = 1;
         }
+
+        // if (trans_recv_result()) {
+        //     trans_recv_overtime = 0;
+        //     trans_recv_start    = 1;
+        //     uint8_t recv_data[4];
+        //     YG350_read(recv_data, 1);
+        //     if (1 <= recv_data[0] && recv_data[0] <= 0x12) {
+        //         control_led(recv_data[0]);
+        //     }
+        // }
+
+        // if (trans_recv_start) {
+        //     trans_recv_start = 0;
+        //     switch (trans_recv_channel) {
+        //         case 0:
+        //             YG350_recv(SEND_CHANNEL_1);
+        //             break;
+        //         case 1:
+        //             YG350_recv(SEND_CHANNEL_2);
+        //             break;
+        //         case 2:
+        //             YG350_recv(SEND_CHANNEL_3);
+        //             break;
+        //         default:
+        //             break;
+        //     }
+        // }
     }
 }
 

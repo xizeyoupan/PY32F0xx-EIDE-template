@@ -8,9 +8,25 @@ extern "C" {
 #include "main.h"
 
 typedef enum {
-    RECEIVED_ON = 0x01,
-    RECEIVED_OFF,
-    RECEIVED_KEY,
+    RECEIVED_ON_OFF = 0x01,
+    RECEIVED_TIMER  = 0x03,
+    RECEIVED_NEXT_COLOR,
+    RECEIVED_PREV_COLOR,
+    RECEIVED_MODE_STEADY,
+    RECEIVED_MODE_FADE,
+    RECEIVED_MODE_TWINKLE,
+    RECEIVED_MODE_SHINING,
+    RECEIVED_MODE_JUMP,
+    RECEIVED_MODE_CHASING,
+    RECEIVED_MODE_BLOOMFADE,
+    RECEIVED_MODE_WAVE,
+    RECEIVED_MODE_BREATHING,
+    RECEIVED_MODE_AUTO,
+    RECEIVED_INC_SPEED,
+    RECEIVED_DEC_SPEED = 0x12,
+    RECEIVED_FKEY,
+    RECEIVED_STKEY,
+    RECEIVED_NUM,
 } Received_Command;
 
 typedef enum {
@@ -46,6 +62,11 @@ typedef enum {
     FUNC_1,
     FUNC_NUM,
 } Func_TypeDef;
+
+typedef enum {
+    COLOR_DIR_NEXT,
+    COLOR_DIR_PREV,
+} Color_Dir_TypeDef;
 
 void control_led(Received_Command cmd);
 void send_led_data();

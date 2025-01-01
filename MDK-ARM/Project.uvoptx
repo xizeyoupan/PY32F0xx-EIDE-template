@@ -152,82 +152,34 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>243</LineNumber>
+          <LineNumber>647</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134226708</Address>
+          <Address>26</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\Src\main.c</Filename>
+          <Filename>..\PY32F0xx_Firmware\Drivers\PY32F0xx_HAL_Driver\Src\py32f0xx_hal_tim.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\TIM1_ARR\../Src/main.c\243</Expression>
+          <Expression>\\TIM1_ARR\../PY32F0xx_Firmware/Drivers/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_tim.c\647</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>180</LineNumber>
+          <LineNumber>149</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>46</Address>
+          <Address>134231964</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\PY32F0xx_Firmware\Drivers\PY32F0xx_HAL_Driver\Src\py32f0xx_hal_tim_ex.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\TIM1_ARR\../PY32F0xx_Firmware/Drivers/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_tim_ex.c\180</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>647</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>..\PY32F0xx_Firmware\Drivers\PY32F0xx_HAL_Driver\Src\py32f0xx_hal_tim.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression></Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>107</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
           <Filename>..\Src\led_driver.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression></Expression>
-        </Bp>
-        <Bp>
-          <Number>4</Number>
-          <Type>0</Type>
-          <LineNumber>146</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>..\Src\led_driver.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\TIM1_ARR\../Src/led_driver.c\149</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

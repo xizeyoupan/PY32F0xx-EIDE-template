@@ -56,6 +56,15 @@ extern "C" {
 #define SCL_PIN                    (GPIO_PIN_9)
 #define SCL_PIN_PORT               (GPIOA)
 
+#define LED_R_PIN                  (GPIO_PIN_0)
+#define LED_R_PIN_PORT             (GPIOA)
+
+#define LED_G_PIN                  (GPIO_PIN_1)
+#define LED_G_PIN_PORT             (GPIOA)
+
+#define LED_B_PIN                  (GPIO_PIN_2)
+#define LED_B_PIN_PORT             (GPIOA)
+
 #define usPerInterrupt             (40)
 #define msToTimerInterruptCount(x) ((x) * 1000 / usPerInterrupt)
 

@@ -4,24 +4,29 @@
 #include "main.h"
 // ---------------------------------------------------------------------------------------------------------------------
 
-unsigned int trans_recv_overtime;
-unsigned char trans_recv_channel;
-unsigned char trans_recv_start;
+volatile unsigned int trans_recv_overtime;
+volatile unsigned char trans_recv_channel;
+volatile unsigned char trans_recv_start;
 
 void delay_1us()
 {
-    for (uint8_t i = 0; i < 20; i++) {
-        __NOP();
-    }
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();
 }
 
 void delay_5us()
 {
-    delay_1us();
-    delay_1us();
-    delay_1us();
-    delay_1us();
-    delay_1us();
+    for (uint8_t i = 0; i < 20; i++) {
+        __NOP();
+    }
 }
 
 void delay_ms(uint16_t t)
@@ -64,8 +69,8 @@ void YG350_set_sda_in()
 #define YG350_I2C_SET_SDA_OUT YG350_set_sda_out()
 #define YG350_I2C_SET_SDA_IN  YG350_set_sda_in()
 
-#define YG350_I2C_SET_SDA_H                                   \
-    HAL_GPIO_WritePin(SDA_PIN_PORT, SDA_PIN, GPIO_PIN_RESET); \
+#define YG350_I2C_SET_SDA_H                                 \
+    HAL_GPIO_WritePin(SDA_PIN_PORT, SDA_PIN, GPIO_PIN_SET); \
     delay_1us()
 #define YG350_I2C_SET_SDA_L                                   \
     HAL_GPIO_WritePin(SDA_PIN_PORT, SDA_PIN, GPIO_PIN_RESET); \
